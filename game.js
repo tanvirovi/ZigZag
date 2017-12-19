@@ -1,6 +1,9 @@
 var game;
+//adding background color as hex value
+var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
+ 0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
 
-window.onload = function() {	
+ window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
 	//Boot state: in the boot state we will make all adjustment to the game to be resized accordingly to browser 
 	//resolution and aspect ratio
@@ -55,13 +58,27 @@ preload.prototype = {
 
 var titleScreen = function(game){};
 titleScreen.prototype = {  
-     create: function(){  
-          console.log("title screen here");
+     create: function(){
+		//the next line will change background color according to-
+		//defined hex value bgColor[game.rnd.between(0, bgColor.length - 1 )]
+         game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
+         //adding the title or game image
+		 var title = game.add.image(game.width / 2, 210, "title");
+         title.anchor.set(0.5);
+		 //adding the play game button 
+         var playButton = game.add.button(game.width / 2, game.height - 150, "playbutton", this.startGame);
+         playButton.anchor.set(0.5);
+     },
+     startGame: function(){
+          game.state.start("PlayGame");     
      }
 }
 
 var playGame = function(game){};
-playGame.prototype = {    
+playGame.prototype = {
+		create: function(){
+			console.log("play the game");
+		}
 }
 
 var gameOverScreen = function(game){};
