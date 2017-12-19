@@ -24,14 +24,24 @@ boot.prototype = {
 }
 
 var preload = function(game){};
-preload.prototype = {   
-     create: function(){
-          console.log("going to preload");
-     } 
+preload.prototype = {
+	preload: function(){ 
+          var loadingBar = this.add.sprite(game.width / 2, game.height / 2, "loading");
+          loadingBar.anchor.setTo(0.5);
+          game.load.setPreloadSprite(loadingBar);
+          game.load.image("title", "assets/sprites/title.png");
+          game.load.image("playbutton", "assets/sprites/playbutton.png");
+	},
+  	create: function(){
+		this.game.state.start("TitleScreen");
+	}
 }
 
 var titleScreen = function(game){};
-titleScreen.prototype = {    
+titleScreen.prototype = {  
+     create: function(){  
+          console.log("title screen here");
+     }
 }
 
 var playGame = function(game){};
