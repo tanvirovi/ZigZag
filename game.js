@@ -2,7 +2,6 @@ var game;
 
 window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
-<<<<<<< HEAD
      game.state.add("Boot", boot);
      game.state.add("Preload", preload); 
      game.state.add("TitleScreen", titleScreen);
@@ -13,13 +12,22 @@ window.onload = function() {
 
 var boot = function(game){};
 boot.prototype = {
+  	preload: function(){
+          this.game.load.image("loading","assets/sprites/loading.png"); 
+	},
   	create: function(){
-		console.log("game started");
-	}     
+		game.scale.pageAlignHorizontally = true;
+		game.scale.pageAlignVertically = true;
+          game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+		this.game.state.start("Preload");
+	}      
 }
 
 var preload = function(game){};
-preload.prototype = {    
+preload.prototype = {   
+     create: function(){
+          console.log("going to preload");
+     } 
 }
 
 var titleScreen = function(game){};
@@ -32,6 +40,4 @@ playGame.prototype = {
 
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {    
-=======
->>>>>>> a4fe40f1720611625591665a0e8bce5e281df1bc
 }
