@@ -2,6 +2,7 @@ var game;
 
 window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
+<<<<<<< HEAD
      game.state.add("Boot", boot);
      game.state.add("Preload", preload); 
      game.state.add("TitleScreen", titleScreen);
@@ -31,4 +32,6 @@ playGame.prototype = {
 
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {    
+=======
+>>>>>>> a4fe40f1720611625591665a0e8bce5e281df1bc
 }
