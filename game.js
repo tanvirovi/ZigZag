@@ -2,6 +2,7 @@ var game;
 //adding background color as hex value
 var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
  0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
+ var tunnelWidth = 256;
 
  window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -51,6 +52,8 @@ preload.prototype = {
           game.load.image("title", "assets/sprites/title.png");
           game.load.image("playbutton", "assets/sprites/playbutton.png");
 		  game.load.image("backsplash", "assets/sprites/backsplash.png");
+		  game.load.image("tunnelbg", "assets/sprites/tunnelbg.png");
+          game.load.image("wall", "assets/sprites/wall.png");
 	},
   	create: function(){
 		this.game.state.start("TitleScreen");
@@ -97,7 +100,16 @@ titleScreen.prototype = {
 var playGame = function(game){};
 playGame.prototype = {
 		create: function(){
-			console.log("play the game");
+			var tintColor = bgColors[game.rnd.between(0,bgColors.length-1)];
+			var tunnelBG = game.add.tileSprite(0,0,game.width,game.height,"tunnelbg");
+			tunnelBG.tint = tintColor;
+			// it is set as left wall of the game world according to game width
+			var leftWallBG = game.add.tileSprite(- tunnelWidth / 2, 0, game.width / 2, game.height, "wall");
+			leftWallBG.tint = tintColor;
+			// it is set as right wall by 
+			var rightWallBG = game.add.tileSprite((game.width + tunnelWidth) / 2, 0, game.width / 2, game.height, "wall");
+			rightWallBG.tint = tintColor;
+			rightWallBG.tileScale.x = -1;
 		}
 }
 
