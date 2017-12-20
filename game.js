@@ -54,6 +54,7 @@ preload.prototype = {
 		  game.load.image("backsplash", "assets/sprites/backsplash.png");
 		  game.load.image("tunnelbg", "assets/sprites/tunnelbg.png");
           game.load.image("wall", "assets/sprites/wall.png");
+		  game.load.image("ship", "assets/sprites/ship.png");
 	},
   	create: function(){
 		this.game.state.start("TitleScreen");
@@ -110,6 +111,16 @@ playGame.prototype = {
 			var rightWallBG = game.add.tileSprite((game.width + tunnelWidth) / 2, 0, game.width / 2, game.height, "wall");
 			rightWallBG.tint = tintColor;
 			rightWallBG.tileScale.x = -1;
+			
+			// which is game game.width = 640 tunnelWidth = 256 shipPositions = [224,160]
+			this.shipPositions = [(game.width - tunnelWidth) / 2 + 32, (game.width - tunnelWidth) / 2 - 32];
+			// this will load the ship on the left side
+			this.ship = game.add.sprite(this.shipPositions[0], 860, "ship");
+			// to keep track of the side
+			this.ship.side =0;
+			this.ship.anchor.set(0.5);
+			// physics.enable(object, system) creates a default physics body on object using system physics system. 
+			this.game.physics.enable(this.ship, Phaser.Physics.ARCADE);
 		}
 }
 
