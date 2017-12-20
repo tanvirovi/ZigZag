@@ -3,6 +3,8 @@ var game;
 var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
  0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
  var tunnelWidth = 256;
+ var shipHorizontalSpeed = 100; // this will determine speed movement horizontally
+ var shipMoveDelay = 0;
 
  window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -118,9 +120,33 @@ playGame.prototype = {
 			this.ship = game.add.sprite(this.shipPositions[0], 860, "ship");
 			// to keep track of the side
 			this.ship.side =0;
+			
+			this.ship.canMove = true;
+			
 			this.ship.anchor.set(0.5);
 			// physics.enable(object, system) creates a default physics body on object using system physics system. 
 			this.game.physics.enable(this.ship, Phaser.Physics.ARCADE);
+			//onDown will register player tap or click
+			game.input.onDown.add(this.moveShip, this);
+		},
+		moveShip: function(){
+			// only prompt if this.ship.canMove is true 
+			if(this.ship.canMove){
+				
+				// until move animation is completed
+				this.ship.canMove = false;
+				
+				//this is how the side is changed 
+				this.ship.side = 1 - this.ship.side;
+				var horizontalTween = game.add.tween(this.ship).to({
+					x: this.shipPositions[this.ship.side]
+				}, shipHorizontalSpeed, Phaser.Easing.Linear.None, true);
+				horizontalTween.onComplete.add(function(){
+					// this will delay the time between horizontal movement
+					game.time.events.add(shipMoveDelay, function(){
+					this.ship.canMove = true;
+				},this);
+			},this);
 		}
 }
 
