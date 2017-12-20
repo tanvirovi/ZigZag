@@ -50,6 +50,7 @@ preload.prototype = {
           game.load.setPreloadSprite(loadingBar);
           game.load.image("title", "assets/sprites/title.png");
           game.load.image("playbutton", "assets/sprites/playbutton.png");
+		  game.load.image("backsplash", "assets/sprites/backsplash.png");
 	},
   	create: function(){
 		this.game.state.start("TitleScreen");
@@ -59,15 +60,34 @@ preload.prototype = {
 var titleScreen = function(game){};
 titleScreen.prototype = {  
      create: function(){
+		var titleBG = game.add.tileSprite(0,0,game.width,game.height,
+		"backsplash");
+		titleBG.tint = bgColors[game.rnd.between(0, bgColors.length -1)];
 		//the next line will change background color according to-
 		//defined hex value bgColor[game.rnd.between(0, bgColor.length - 1 )]
          game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
-         //adding the title or game image
+         
+		 //adding the title or game image
 		 var title = game.add.image(game.width / 2, 210, "title");
          title.anchor.set(0.5);
+		 //using tween both for title-name and playButton
+		 var tween = game.add.tween(title).to({
+               width: 420,
+               height:420
+          }, 4000, "Linear", true, 0, -1); 
+          tween.yoyo(true);
+		  
+		  //could also change the background color
+		  //title.tint = bgColors[game.rnd.between(0, bgColors.length -1)];
+		 
 		 //adding the play game button 
          var playButton = game.add.button(game.width / 2, game.height - 150, "playbutton", this.startGame);
          playButton.anchor.set(0.5);
+		 var tween = game.add.tween(playButton).to({
+               width: 220,
+               height:220
+          }, 1500, "Linear", true, 0, -1); 
+          tween.yoyo(true);
      },
      startGame: function(){
           game.state.start("PlayGame");     
