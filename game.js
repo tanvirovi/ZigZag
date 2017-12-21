@@ -148,6 +148,7 @@ playGame.prototype = {
 				},this);
 			},this);
 		}
+	}
 }
 
 var gameOverScreen = function(game){};
