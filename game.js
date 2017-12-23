@@ -2,10 +2,13 @@ var game;
 //adding background color as hex value
 var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
  0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
- var tunnelWidth = 256;
+var tunnelWidth = 256;
  
- var shipHorizontalSpeed = 100; // this will determine speed movement horizontally
- var shipMoveDelay = 0;
+var shipHorizontalSpeed = 100; // this will determine speed movement horizontally
+var shipMoveDelay = 0;
+
+// this speed will help the ship rise at the top in 15 sec
+var shipVerticalSpeed = 15000;
 
  window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -130,6 +133,10 @@ playGame.prototype = {
 			game.physics.enable(this.ship, Phaser.Physics.ARCADE);
 			//onDown will register player tap or click
 			game.input.onDown.add(this.moveShip, this);
+            
+            this.verticalTween = game.add.tween(this.ship).to({
+                y: 0
+            },shipVerticalSpeed, Phaser.Easing.Linear.None, true);
 		},
 		moveShip: function(){
 			// only prompt if this.ship.canMove is true 
