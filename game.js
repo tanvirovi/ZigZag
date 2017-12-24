@@ -215,7 +215,7 @@ playGame.prototype = {
                 }
             }
             if(!this.ship.destroyed && this.ship.alpha == 1){
-            game.physics.arcade.collide(this.ship, this.barrierGroup, function(s, b){
+            game.physics.arcade.collide(this.ship, this.barrierGroup, null, function(s, b){
                 this.ship.destroyed = true
                 this.smokeEmitter.destroy();
                 var destroyTween = game.add.tween(this.ship).to({
@@ -236,7 +236,7 @@ playGame.prototype = {
                             game.state.start("GameOverScreen");
                         });
                     }, this);
-                }, null, this)
+                }, this)
             }
         },
     //this function will reset the player to the bottom of the screen
@@ -289,7 +289,8 @@ Barrier = function (game, speed, tintColor) {
      this.crop(cropRect);
 	 game.physics.enable(this, Phaser.Physics.ARCADE);
      this.anchor.set(position, 0.5);
-     this.tint = tintColor;     
+     this.tint = tintColor;
+     this.body.immovable = true;
      this.body.velocity.y = speed;
      this.placeBarrier = true;
 };
