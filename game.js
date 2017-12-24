@@ -15,6 +15,9 @@ var swipeDistance = 10;
 var barrierSpeed = 280;
 // distance between the barriers 
 var barrierGap = 120;
+var shipInvisibilityTime = 1000;
+var barrierIncreaseSpeed = 1.1;
+
 
 window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -211,7 +214,7 @@ playGame.prototype = {
                     this.restartShip();
                 }
             }
-            if(!this.ship.destroyed){
+            if(!this.ship.destroyed && this.ship.alpha == 1){
             game.physics.arcade.collide(this.ship, this.barrierGroup, function(s, b){
                 this.ship.destroyed = true
                 this.smokeEmitter.destroy();
@@ -238,19 +241,30 @@ playGame.prototype = {
         },
     //this function will reset the player to the bottom of the screen
         restartShip: function(){
-            //when called this will prevent from further swipe
-            this.ship.canSwipe = false;
-            //will stop the vertical speed
-            this.verticalTween.stop();
             
-            this.verticalTween = game.add.tween(this.ship).to({
-                y: 860
-            }, 100,Phaser.Easing.Linear.None, true);
-            this.verticalTween.onComplete.add(function(){
+            if(!this.ship.destroyed && this.ship.alpha == 1){
+                barrierSpeed *= barrierIncreaseSpeed;
+                for(var i = 0; i < this.barrierGroup.length; i++){
+                    this.barrierGroup.getChildAt(i).body.velocity.y = barrierSpeed;
+                }
+                //when called this will prevent from further swipe
+                this.ship.canSwipe = false;
+                //will stop the vertical speed
+                this.verticalTween.stop();
+                this.ship.alpha = 0.5;
+            
                 this.verticalTween = game.add.tween(this.ship).to({
-                    y: 0
-                }, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
-            }, this)
+                y: 860
+                }, 100,Phaser.Easing.Linear.None, true);
+                this.verticalTween.onComplete.add(function(){
+                    this.verticalTween = game.add.tween(this.ship).to({
+                        y: 0
+                    }, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
+                    var alphaTween = game.add.tween(this.ship).to({
+                        alpha: 1
+                    }, shipInvisibilityTime, Phaser.Easing.Bounce.In, true);
+                }, this)
+            }
         },
         addBarrier: function(group, tintColor){
             var barrier = new Barrier(game, barrierSpeed, tintColor);
