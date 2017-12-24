@@ -11,8 +11,12 @@ var shipMoveDelay = 0;
 var shipVerticalSpeed = 15000;
 //swipeDistance tells us any momvement greater than 10px will considers as swipe
 var swipeDistance = 10;
+//this will set the barrier speed
+var barrierSpeed = 280;
+// distance between the barriers 
+var barrierGap = 120;
 
- window.onload = function() {	
+window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
 	//Boot state: in the boot state we will make all adjustment to the game to be resized accordingly to browser 
 	//resolution and aspect ratio
@@ -63,6 +67,7 @@ preload.prototype = {
 		  game.load.image("tunnelbg", "assets/sprites/tunnelbg.png");
           game.load.image("wall", "assets/sprites/wall.png");
 		  game.load.image("ship", "assets/sprites/ship.png");
+          game.load.image("barrier", "assets/sprites/barrier.png");
 	},
   	create: function(){
 		this.game.state.start("TitleScreen");
@@ -143,6 +148,15 @@ playGame.prototype = {
             this.verticalTween = game.add.tween(this.ship).to({
                 y: 0
             },shipVerticalSpeed, Phaser.Easing.Linear.None, true);
+            
+            //it contains all the barrier 
+            this.barrierGroup = game.add.group();
+            //barrier is the variable and Barrier is thename of the new class  
+            var barrier = new Barrier(game, barrierSpeed, tintColor);
+            // adding the barrier group to the group
+            this.barrierGroup = game.add.group();
+            //adding barrier to the barrier group
+            this.addBarrier(this.barrierGroup, tintColor);
 		},
 		moveShip: function(){
             this.ship.canSwipe = true;
@@ -170,10 +184,17 @@ playGame.prototype = {
                     this.restartShip();
                 }
             }
+            game.physics.arcade.collide(this.ship, this.barrierGroup, function(s, b){
+                game.state.start("GameOverScreen");
+            })
         },
+    //this function will reset the player to the bottom of the screen
         restartShip: function(){
+            //when called this will prevent from further swipe
             this.ship.canSwipe = false;
+            //will stop the vertical speed
             this.verticalTween.stop();
+            
             this.verticalTween = game.add.tween(this.ship).to({
                 y: 860
             }, 100,Phaser.Easing.Linear.None, true);
@@ -182,10 +203,43 @@ playGame.prototype = {
                     y: 0
                 }, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
             }, this)
+        },
+        addBarrier: function(group, tintColor){
+            var barrier = new Barrier(game, barrierSpeed, tintColor);
+            game.add.existing(barrier);
+            group.add(barrier);
         }
 }
 
 
 var gameOverScreen = function(game){};
-gameOverScreen.prototype = {    
+gameOverScreen.prototype = {
+    create:function(){
+        console.log("game over");
+    }
+}
+
+Barrier = function (game, speed, tintColor) {
+     var positions = [(game.width - tunnelWidth) / 2, (game.width + tunnelWidth) / 2];
+     var position = game.rnd.between(0, 1);
+	 Phaser.Sprite.call(this, game, positions[position], -100, "barrier");
+     var cropRect = new Phaser.Rectangle(0, 0, tunnelWidth / 2, 24);
+     this.crop(cropRect);
+	 game.physics.enable(this, Phaser.Physics.ARCADE);
+     this.anchor.set(position, 0.5);
+     this.tint = tintColor;     
+     this.body.velocity.y = speed;
+     this.placeBarrier = true;
+};
+
+Barrier.prototype = Object.create(Phaser.Sprite.prototype);
+Barrier.prototype.constructor = Barrier;
+Barrier.prototype.update = function(){
+    if(this.placeBarrier && this.y > barrierGap){
+        this.placeBarrier = false;
+        playGame.prototype.addBarrier(this.parent, this.tint);
+    }
+    if(this.y > game.height){
+        this.destroy();
+    }
 }
