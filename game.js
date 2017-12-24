@@ -68,6 +68,7 @@ preload.prototype = {
           game.load.image("wall", "assets/sprites/wall.png");
 		  game.load.image("ship", "assets/sprites/ship.png");
           game.load.image("barrier", "assets/sprites/barrier.png");
+          game.load.image("smoke", "assets/sprites/smoke.png");
 	},
   	create: function(){
 		this.game.state.start("TitleScreen");
@@ -131,11 +132,23 @@ playGame.prototype = {
 			this.ship = game.add.sprite(this.shipPositions[0], 860, "ship");
 			// to keep track of the side
 			this.ship.side =0;
-			
+			this.ship.destroyed = false;
 			this.ship.canMove = true;
 			this.ship.canSwipe = false;
 			this.ship.anchor.set(0.5);
-		  
+		    //add.emitter(x, y, max) places a particle emitter in position x, y capable of emitting up to max particles at the same time.
+            this.smokeEmitter = game.add.emitter(this.ship.x, this.ship.y + 10, 20);
+            //will use the smoke 
+            this.smokeEmitter.makeParticles("smoke");
+            
+            //respectively set the horizontal and vertical speed of each particle as a random value from min to max pixels by second.
+            this.smokeEmitter.setXSpeed(-15, 15);
+            this.smokeEmitter.setYSpeed(50, 150);
+            
+            this.smokeEmitter.setAlpha(0.5, 1);
+            //start(explode, lifespan, frequency)
+            this.smokeEmitter.start(false, 1000, 40);
+            
 			// physics.enable(object, system) creates a default physics body on object using system physics system. 
 			game.physics.enable(this.ship, Phaser.Physics.ARCADE);
 			//onDown will register player tap or click
@@ -174,9 +187,23 @@ playGame.prototype = {
                          this.ship.canMove = true;
                     }, this);
                }, this);
+            
+                //adding the gost effect on the player
+                var ghostShip = game.add.sprite(this.ship.x, this.ship.y, "ship");
+                ghostShip.alpha = 0.5;
+                ghostShip.anchor.set(0.5);
+                var ghostTween = game.add.tween(ghostShip).to({
+                    alpha: 0
+                }, 350, Phaser.Easing.Linear.None, true);
+                ghostTween.onComplete.add(function(){
+                ghostShip.destroy();
+                });
             }
         },
         update: function(){
+            this.smokeEmitter.x = this.ship.x;
+            this.smokeEmitter.y = this.ship.y;
+            
             // checking for the 10px swipe distance
             if(this.ship.canSwipe){
                 if(Phaser.Point.distance(game.input.activePointer.positionDown,
@@ -184,9 +211,30 @@ playGame.prototype = {
                     this.restartShip();
                 }
             }
+            if(!this.ship.destroyed){
             game.physics.arcade.collide(this.ship, this.barrierGroup, function(s, b){
-                game.state.start("GameOverScreen");
-            })
+                this.ship.destroyed = true
+                this.smokeEmitter.destroy();
+                var destroyTween = game.add.tween(this.ship).to({
+                    x: this.ship.x + game.rnd.between(-100, 100),
+                    y: this.ship.y - 100,
+                    rotation: 10
+                }, 1000, Phaser.Easing.Linear.None, true);
+                destroyTween.onComplete.add(function(){
+                    var explosionEmitter = game.add.emitter(this.ship.x,
+                        this.ship.y, 200);
+                    explosionEmitter.makeParticles("smoke");
+                    explosionEmitter.setAlpha(0.5, 1);
+                    explosionEmitter.minParticleScale = 0.5;
+                    explosionEmitter.maxParticleScale = 2;
+                    explosionEmitter.start(true, 2000, null, 200);
+                    this.ship.destroy();
+                        game.time.events.add(Phaser.Timer.SECOND * 2, function(){
+                            game.state.start("GameOverScreen");
+                        });
+                    }, this);
+                }, null, this)
+            }
         },
     //this function will reset the player to the bottom of the screen
         restartShip: function(){
