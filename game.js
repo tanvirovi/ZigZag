@@ -9,6 +9,8 @@ var shipMoveDelay = 0;
 
 // this speed will help the ship rise at the top in 15 sec
 var shipVerticalSpeed = 15000;
+//swipeDistance tells us any momvement greater than 10px will considers as swipe
+var swipeDistance = 10;
 
  window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -126,19 +128,24 @@ playGame.prototype = {
 			this.ship.side =0;
 			
 			this.ship.canMove = true;
-			
+			this.ship.canSwipe = false;
 			this.ship.anchor.set(0.5);
 		  
 			// physics.enable(object, system) creates a default physics body on object using system physics system. 
 			game.physics.enable(this.ship, Phaser.Physics.ARCADE);
 			//onDown will register player tap or click
 			game.input.onDown.add(this.moveShip, this);
+            // canSwipe is also set to false when the player releases the input – mouse or finger – from the game
+            game.input.onUp.add(function(){
+                this.ship.canSwipe = false;
+            }, this);
             
             this.verticalTween = game.add.tween(this.ship).to({
                 y: 0
             },shipVerticalSpeed, Phaser.Easing.Linear.None, true);
 		},
 		moveShip: function(){
+            this.ship.canSwipe = true;
 			// only prompt if this.ship.canMove is true 
 			if(this.ship.canMove){
 			// then canMove set to false until animation is done
@@ -153,8 +160,29 @@ playGame.prototype = {
                          this.ship.canMove = true;
                     }, this);
                }, this);
-          }
-     }  
+            }
+        },
+        update: function(){
+            // checking for the 10px swipe distance
+            if(this.ship.canSwipe){
+                if(Phaser.Point.distance(game.input.activePointer.positionDown,
+                                         game.input.activePointer.position) > swipeDistance){
+                    this.restartShip();
+                }
+            }
+        },
+        restartShip: function(){
+            this.ship.canSwipe = false;
+            this.verticalTween.stop();
+            this.verticalTween = game.add.tween(this.ship).to({
+                y: 860
+            }, 100,Phaser.Easing.Linear.None, true);
+            this.verticalTween.onComplete.add(function(){
+                this.verticalTween = game.add.tween(this.ship).to({
+                    y: 0
+                }, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
+            }, this)
+        }
 }
 
 
