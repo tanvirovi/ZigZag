@@ -1,4 +1,5 @@
 var game;
+var score;
 //adding background color as hex value
 var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
  0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
@@ -17,6 +18,9 @@ var barrierSpeed = 280;
 var barrierGap = 120;
 var shipInvisibilityTime = 1000;
 var barrierIncreaseSpeed = 1.1;
+
+var scoreHeight = 100;
+var scoreSegments = [100, 50, 25, 10, 5, 2, 1];
 
 
 window.onload = function() {	
@@ -72,6 +76,8 @@ preload.prototype = {
 		  game.load.image("ship", "assets/sprites/ship.png");
           game.load.image("barrier", "assets/sprites/barrier.png");
           game.load.image("smoke", "assets/sprites/smoke.png");
+          game.load.image("separator", "assets/sprites/separator.png");
+          game.load.bitmapFont("font", "assets/fonts/font.png", "assets/fonts/font.fnt");
 	},
   	create: function(){
 		this.game.state.start("TitleScreen");
@@ -118,6 +124,7 @@ titleScreen.prototype = {
 var playGame = function(game){};
 playGame.prototype = {
 		create: function(){
+            score = 0;
 			var tintColor = bgColors[game.rnd.between(0,bgColors.length-1)];
 			var tunnelBG = game.add.tileSprite(0,0,game.width,game.height,"tunnelbg");
 			tunnelBG.tint = tintColor;
@@ -129,6 +136,20 @@ playGame.prototype = {
 			rightWallBG.tint = tintColor;
 			rightWallBG.tileScale.x = -1;
 			
+            for(var i = 1; i <= scoreSegments.length; i++){
+                var leftSeparator = game.add.sprite((game.width - tunnelWidth) / 2, scoreHeight * i, "separator");
+                leftSeparator.tint = tintColor;
+                leftSeparator.anchor.set(1, 0)
+                var rightSeparator = game.add.sprite((game.width + tunnelWidth) / 2, scoreHeight * i, "separator");
+                rightSeparator.tint = tintColor;
+                var posX = (game.width - tunnelWidth) / 2 - leftSeparator.width / 2;
+                if(i % 2 == 0){
+                    posX = (game.width + tunnelWidth) / 2 + leftSeparator.width / 2;
+                }
+                game.add.bitmapText(posX, scoreHeight * (i - 1) + scoreHeight / 2 - 18 , "font", scoreSegments[i - 1].toString(), 36).anchor.x = 0.5;
+            }
+            
+            this.scoreText = game.add.bitmapText(20, game.height - 90 , "font", "0", 48);
 			// which is game game.width = 640 tunnelWidth = 256 shipPositions = [224,160]
 			this.shipPositions = [(game.width - tunnelWidth) / 2 + 32, (game.width + tunnelWidth) / 2 - 32];
 			// this will load the ship on the left side
@@ -173,6 +194,7 @@ playGame.prototype = {
             this.barrierGroup = game.add.group();
             //adding barrier to the barrier group
             this.addBarrier(this.barrierGroup, tintColor);
+            game.time.events.loop(250, this.updateScore, this);
 		},
 		moveShip: function(){
             this.ship.canSwipe = true;
@@ -270,6 +292,16 @@ playGame.prototype = {
             var barrier = new Barrier(game, barrierSpeed, tintColor);
             game.add.existing(barrier);
             group.add(barrier);
+        },
+        
+        updateScore: function(){
+            if(this.ship.alpha == 1 && !this.ship.destroyed){
+                if(this.ship.y < scoreHeight * scoreSegments.length){
+                var row = Math.floor(this.ship.y / scoreHeight);
+                score += scoreSegments[row];
+                this.scoreText.text = score.toString();
+                }
+            }
         }
 }
 
