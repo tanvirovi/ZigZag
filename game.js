@@ -196,6 +196,11 @@ playGame.prototype = {
             this.addBarrier(this.barrierGroup, tintColor);
             //We want to check every ¼ seconds which height we reached with the spaceship and increase score accordingly.
             game.time.events.loop(250, this.updateScore, this);
+            //highlightbar is the name of the tiled sprite
+            this.highlightBar = game.add.tileSprite(game.width / 2, 0, tunnelWidth,scoreHeight,"smoke");
+            this.highlightBar.anchor.set(0.5, 0);
+            this.highlightBar.alpha = 0.1;
+            this.highlightBar.visible = false;
 		},
 		moveShip: function(){
             this.ship.canSwipe = true;
@@ -238,7 +243,13 @@ playGame.prototype = {
                 }
             }
             if(!this.ship.destroyed && this.ship.alpha == 1){
+                if(this.ship.y < scoreHeight * scoreSegments.length){
+                    this.highlightBar.visible = true;
+                    var row = Math.floor(this.ship.y / scoreHeight);
+                    this.highlightBar.y = row * scoreHeight;
+                }
             game.physics.arcade.collide(this.ship, this.barrierGroup, null, function(s, b){
+                this.highlightBar.visible = false;
                 this.ship.destroyed = true
                 this.smokeEmitter.destroy();
                 var destroyTween = game.add.tween(this.ship).to({
