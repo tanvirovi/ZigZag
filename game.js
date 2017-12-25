@@ -320,7 +320,7 @@ playGame.prototype = {
 
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
-<<<<<<< HEAD
+
     create: function(){
         var titleBG = game.add.tileSprite(0, 0, game.width, game.height,
         "backsplash");
@@ -340,10 +340,7 @@ gameOverScreen.prototype = {
         },
         startGame: function(){
         game.state.start("PlayGame");
-=======
-    create:function(){
-        console.log("game over");
-    }
+        }
 }
 
 Barrier = function (game, speed, tintColor) {
@@ -369,6 +366,5 @@ Barrier.prototype.update = function(){
     }
     if(this.y > game.height){
         this.destroy();
->>>>>>> a4c96f428ad6fdce5bf153afe513c4164bb1998a
     }
 }
