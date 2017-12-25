@@ -194,6 +194,7 @@ playGame.prototype = {
             this.barrierGroup = game.add.group();
             //adding barrier to the barrier group
             this.addBarrier(this.barrierGroup, tintColor);
+            //We want to check every ¼ seconds which height we reached with the spaceship and increase score accordingly.
             game.time.events.loop(250, this.updateScore, this);
 		},
 		moveShip: function(){
