@@ -1,5 +1,6 @@
 var game;
 var score;
+var savedData;
 //adding background color as hex value
 var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
  0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
@@ -21,7 +22,7 @@ var barrierIncreaseSpeed = 1.1;
 
 var scoreHeight = 100;
 var scoreSegments = [100, 50, 25, 10, 5, 2, 1];
-
+var localStorageName = "mygame"
 
 window.onload = function() {	
 	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -87,16 +88,20 @@ preload.prototype = {
 var titleScreen = function(game){};
 titleScreen.prototype = {  
      create: function(){
+		savedData = localStorage.getItem(localStorageName)==null?
+		{score:0}:JSON.parse(localStorage.getItem(localStorageName));
 		var titleBG = game.add.tileSprite(0,0,game.width,game.height,
 		"backsplash");
 		titleBG.tint = bgColors[game.rnd.between(0, bgColors.length -1)];
 		//the next line will change background color according to-
 		//defined hex value bgColor[game.rnd.between(0, bgColor.length - 1 )]
-         game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
+        game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
          
 		 //adding the title or game image
-		 var title = game.add.image(game.width / 2, 210, "title");
-         title.anchor.set(0.5);
+		var title = game.add.image(game.width / 2, 210, "title");
+        title.anchor.set(0.5);
+		game.add.bitmapText(game.width / 2, 480 , "font", "Best score", 48).anchor.x = 0.5;
+		game.add.bitmapText(game.width / 2, 530 , "font", savedData.score.toString(), 72).anchor.x = 0.5;
 		 //using tween both for title-name and playButton
 		 var tween = game.add.tween(title).to({
                width: 420,
@@ -125,6 +130,8 @@ var playGame = function(game){};
 playGame.prototype = {
 		create: function(){
             score = 0;
+			savedData = localStorage.getItem(localStorageName)==null?
+			{score:0}:JSON.parse(localStorage.getItem(localStorageName));
 			var tintColor = bgColors[game.rnd.between(0,bgColors.length-1)];
 			var tunnelBG = game.add.tileSprite(0,0,game.width,game.height,"tunnelbg");
 			tunnelBG.tint = tintColor;
@@ -322,25 +329,27 @@ var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
 
     create: function(){
-        var titleBG = game.add.tileSprite(0, 0, game.width, game.height,
-        "backsplash");
+		var bestScore = Math.max(score, savedData.score);
+        var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
         titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
-        game.add.bitmapText(game.width / 2, 50 , "font", "Your score",
-        48).anchor.x = 0.5;
-        game.add.bitmapText(game.width / 2, 150 , "font", score.toString(),
-        72).anchor.x = 0.5;
-        var playButton = game.add.button(game.width / 2, game.height - 150,
-        "playbutton", this.startGame);
+        game.add.bitmapText(game.width / 2, 50 , "font", "Your score", 48).anchor.x = 0.5;
+        game.add.bitmapText(game.width / 2, 150 , "font", score.toString(), 72).anchor.x = 0.5;
+		game.add.bitmapText(game.width / 2, 350 , "font", "Best score", 48).anchor.x = 0.5;
+		game.add.bitmapText(game.width / 2, 450 , "font", bestScore.toString(), 72).anchor.x = 0.5;
+		localStorage.setItem(localStorageName,JSON.stringify({
+			score: bestScore
+		}));
+        var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.startGame);
         playButton.anchor.set(0.5);
         var tween = game.add.tween(playButton).to({
-        width: 220,
-        height:220
+			width: 220,
+			height:220
         }, 1500, "Linear", true, 0, -1);
         tween.yoyo(true);
-        },
-        startGame: function(){
-        game.state.start("PlayGame");
-        }
+    },
+    startGame: function(){
+		game.state.start("PlayGame");
+    }
 }
 
 Barrier = function (game, speed, tintColor) {
