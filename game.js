@@ -24,8 +24,14 @@ var scoreHeight = 100;
 var scoreSegments = [100, 50, 25, 10, 5, 2, 1];
 var localStorageName = "mygame"
 
-window.onload = function() {	
-	game = new Phaser.Game(640, 960, Phaser.AUTO, "");
+window.onload = function() {
+	var width = 640;
+    var height = 960;	
+    var windowRatio = window.innerWidth / window.innerHeight;
+    if(windowRatio < width / height){
+    	var height = width / windowRatio;
+    }
+	game = new Phaser.Game(width, height, Phaser.AUTO, "");
 	//Boot state: in the boot state we will make all adjustment to the game to be resized accordingly to browser 
 	//resolution and aspect ratio
 				// name given(key) , function (state)
@@ -96,7 +102,9 @@ titleScreen.prototype = {
 		//the next line will change background color according to-
 		//defined hex value bgColor[game.rnd.between(0, bgColor.length - 1 )]
         game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
-         
+        
+		 // adding or making the whole background as game color
+		 document.body.style.background = "#"+titleBG.tint.toString(16);
 		 //adding the title or game image
 		var title = game.add.image(game.width / 2, 210, "title");
         title.anchor.set(0.5);
@@ -133,6 +141,7 @@ playGame.prototype = {
 			savedData = localStorage.getItem(localStorageName)==null?
 			{score:0}:JSON.parse(localStorage.getItem(localStorageName));
 			var tintColor = bgColors[game.rnd.between(0,bgColors.length-1)];
+			document.body.style.background = "#"+tintColor.toString(16);
 			var tunnelBG = game.add.tileSprite(0,0,game.width,game.height,"tunnelbg");
 			tunnelBG.tint = tintColor;
 			// it is set as left wall of the game world according to game width
@@ -332,6 +341,7 @@ gameOverScreen.prototype = {
 		var bestScore = Math.max(score, savedData.score);
         var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
         titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
+		document.body.style.background = "#"+titleBG.tint.toString(16);
         game.add.bitmapText(game.width / 2, 50 , "font", "Your score", 48).anchor.x = 0.5;
         game.add.bitmapText(game.width / 2, 150 , "font", score.toString(), 72).anchor.x = 0.5;
 		game.add.bitmapText(game.width / 2, 350 , "font", "Best score", 48).anchor.x = 0.5;
