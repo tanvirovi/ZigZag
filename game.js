@@ -139,6 +139,7 @@ titleScreen.prototype = {
 var playGame = function(game){};
 playGame.prototype = {
 		create: function(){
+			this.saveBarrierSpeed = barrierSpeed;
 			this.bgMusic = game.add.audio("bgmusic");
 			this.bgMusic.loopFull(1);
             score = 0;
@@ -214,6 +215,7 @@ playGame.prototype = {
             this.barrierGroup = game.add.group();
             //adding barrier to the barrier group
             this.addBarrier(this.barrierGroup, tintColor);
+			
             //We want to check every ¼ seconds which height we reached with the spaceship and increase score accordingly.
             game.time.events.loop(250, this.updateScore, this);
             //highlightbar is the name of the tiled sprite
@@ -221,8 +223,17 @@ playGame.prototype = {
             this.highlightBar.anchor.set(0.5, 0);
             this.highlightBar.alpha = 0.1;
             this.highlightBar.visible = false;
+			
+			this.spacebar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+			this.spacebar.onDown.add(this.moveShip, this);
+			this.shift = game.input.keyboard.addKey(Phaser.Keyboard.SHIFT);
+			this.shift.onDown.add(this.restartShip, this);
 		},
-		moveShip: function(){
+		moveShip: function(e){     
+			var isKeyboard = e instanceof Phaser.Key;
+			if(!isKeyboard){
+				this.ship.canSwipe = true;
+			}
             this.ship.canSwipe = true;
 			// only prompt if this.ship.canMove is true 
 			if(this.ship.canMove){
@@ -289,6 +300,7 @@ playGame.prototype = {
                     explosionEmitter.start(true, 2000, null, 200);
                     this.ship.destroy();
                         game.time.events.add(Phaser.Timer.SECOND * 2, function(){
+							//barrierSpeed = this.saveBarrierSpeed;
                             game.state.start("GameOverScreen");
                         });
                     }, this);
