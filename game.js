@@ -85,6 +85,8 @@ preload.prototype = {
           game.load.image("smoke", "assets/sprites/smoke.png");
           game.load.image("separator", "assets/sprites/separator.png");
           game.load.bitmapFont("font", "assets/fonts/font.png", "assets/fonts/font.fnt");
+		  game.load.audio("bgmusic", ["assets/sounds/bgmusic.mp3", "assets/sounds/bgmusic.ogg"]);
+		  game.load.audio("explosion", ["assets/sounds/explosion.mp3", "assets/sounds/explosion.ogg"]); 
 	},
   	create: function(){
 		this.game.state.start("TitleScreen");
@@ -137,6 +139,8 @@ titleScreen.prototype = {
 var playGame = function(game){};
 playGame.prototype = {
 		create: function(){
+			this.bgMusic = game.add.audio("bgmusic");
+			this.bgMusic.loopFull(1);
             score = 0;
 			savedData = localStorage.getItem(localStorageName)==null?
 			{score:0}:JSON.parse(localStorage.getItem(localStorageName));
@@ -274,8 +278,10 @@ playGame.prototype = {
                     rotation: 10
                 }, 1000, Phaser.Easing.Linear.None, true);
                 destroyTween.onComplete.add(function(){
-                    var explosionEmitter = game.add.emitter(this.ship.x,
-                        this.ship.y, 200);
+					this.bgMusic.stop();
+					var explosionSound = game.add.audio("explosion");
+					explosionSound.play();
+                    var explosionEmitter = game.add.emitter(this.ship.x, this.ship.y, 200);
                     explosionEmitter.makeParticles("smoke");
                     explosionEmitter.setAlpha(0.5, 1);
                     explosionEmitter.minParticleScale = 0.5;
