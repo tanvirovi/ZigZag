@@ -1,6 +1,6 @@
 var game;
 var score;
-var savedData;
+
 //adding background color as hex value
 var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
  0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
@@ -21,8 +21,28 @@ var shipInvisibilityTime = 1000;
 var barrierIncreaseSpeed = 1.1;
 
 var scoreHeight = 100;
+
 var scoreSegments = [100, 50, 25, 10, 5, 2, 1];
-var localStorageName = "mygame"
+
+var name;
+var bestScore;
+var returnArr = [];
+
+var k = 0;
+
+var config = {
+    apiKey: "AIzaSyAJo2Jb785zRBn78QaHd2KxCajscE3iBww",
+    authDomain: "zigzag-be62e.firebaseapp.com",
+    databaseURL: "https://zigzag-be62e.firebaseio.com",
+    projectId: "zigzag-be62e",
+    storageBucket: "zigzag-be62e.appspot.com",
+    messagingSenderId: "875489683030"
+};
+firebase.initializeApp(config);
+var user = firebase.auth().currentUser;
+
+//var fruits = firebase.database();
+//var ref = database.ref('fruits');
 
 window.onload = function() {
 	var width = 640;
@@ -31,28 +51,39 @@ window.onload = function() {
     if(windowRatio < width / height){
     	var height = width / windowRatio;
     }
+    
 	game = new Phaser.Game(width, height, Phaser.AUTO, "");
 	//Boot state: in the boot state we will make all adjustment to the game to be resized accordingly to browser 
 	//resolution and aspect ratio
 				// name given(key) , function (state)
-     game.state.add("Boot", boot);
+    game.state.add("Boot", boot);
 	 
-	//we will use this state to preload all assets we will use in the game.
+    //we will use this state to preload all assets we will use in the game.
 	//It's the classic “loading” screen you see in most games 
-     game.state.add("Preload", preload);
+    game.state.add("Preload", preload);
 	
 	//the title screen, showing your game name and a play button.
-     game.state.add("TitleScreen", titleScreen);
+    game.state.add("TitleScreen", titleScreen);
 	
-	 game.state.add("HowToPlay", howToPlay);
+    game.state.add("HowToPlay", howToPlay);
 	
-	//The game itself
-     game.state.add("PlayGame", playGame);
+	
+    game.state.add("LobbyState", lobbyState);
+    
+    //The game itself
+    game.state.add("PlayGame", playGame);
 	
 	//The game over screen also features a “play again” button to let players restart the game
-     game.state.add("GameOverScreen", gameOverScreen);
-	 
-     game.state.start("Boot"); //starting the first state
+   
+    game.state.add("GameOverScreen", gameOverScreen);
+    
+    game.state.add("LeaderBoard", leaderBoard);
+    
+    //game.state.add("BattleMode", battleMode);
+    
+    game.state.start("Boot"); //starting the first state
+    
+    
 }
 
 var boot = function(game){};
@@ -79,8 +110,9 @@ preload.prototype = {
           game.load.setPreloadSprite(loadingBar);
           game.load.image("title", "assets/sprites/title.png");
           game.load.image("playbutton", "assets/sprites/playbutton.png");
-		  game.load.image("backsplash", "assets/sprites/backsplash.png");
-		  game.load.image("tunnelbg", "assets/sprites/tunnelbg.png");
+          game.load.image("backsplash", "assets/sprites/backsplash.png");
+		  game.load.image("leaderboard", "assets/sprites/crown.png");
+          game.load.image("tunnelbg", "assets/sprites/tunnelbg.png");
           game.load.image("wall", "assets/sprites/wall.png");
 		  game.load.image("ship", "assets/sprites/ship.png");
           game.load.image("barrier", "assets/sprites/barrier.png");
@@ -91,30 +123,28 @@ preload.prototype = {
 		  game.load.audio("explosion", ["assets/sounds/explosion.mp3", "assets/sounds/explosion.ogg"]); 
 	},
   	create: function(){
-		this.game.state.start("TitleScreen");
+        
+		this.game.state.start("LobbyState");
 	}
 }
 
 var titleScreen = function(game){};
 titleScreen.prototype = {  
      create: function(){
-		savedData = localStorage.getItem(localStorageName)==null?
-		{score:0}:JSON.parse(localStorage.getItem(localStorageName));
-		var titleBG = game.add.tileSprite(0,0,game.width,game.height,
-		"backsplash");
-		titleBG.tint = bgColors[game.rnd.between(0, bgColors.length -1)];
-		//the next line will change background color according to-
-		//defined hex value bgColor[game.rnd.between(0, bgColor.length - 1 )]
-        game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
+
+         var titleBG = game.add.tileSprite(0,0,game.width,game.height,"backsplash");
+         titleBG.tint = bgColors[game.rnd.between(0, bgColors.length -1)];
+         //the next line will change background color according to-
+         //defined hex value bgColor[game.rnd.between(0, bgColor.length - 1 )]
+         game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
         
 		 // adding or making the whole background as game color
-		 document.body.style.background = "#"+titleBG.tint.toString(16);
+         document.body.style.background = "#"+titleBG.tint.toString(16);
 		 //adding the title or game image
-		var title = game.add.image(game.width / 2, 210, "title");
-        title.anchor.set(0.5);
-		game.add.bitmapText(game.width / 2, 480 , "font", "Best score", 48).anchor.x = 0.5;
-		game.add.bitmapText(game.width / 2, 530 , "font", savedData.score.toString(), 72).anchor.x = 0.5;
-		 //using tween both for title-name and playButton
+         var title = game.add.image(game.width / 2, 210, "title");
+         title.anchor.set(0.5);
+		 
+         //using tween both for title-name and playButton
 		 var tween = game.add.tween(title).to({
                width: 420,
                height:420
@@ -132,10 +162,46 @@ titleScreen.prototype = {
                height:220
           }, 1500, "Linear", true, 0, -1); 
           tween.yoyo(true);
+                 
+        var leader = game.add.button(game.width / 2, 480, "leaderboard", this.showLeaderBoard);
+		leader.anchor.set(0.5);
+        var tween = game.add.tween(leader).to({
+               width: 54,
+               height:54
+          }, 1500, "Linear", true, 0, -1); 
+          tween.yoyo(true);
      },
      startGame: function(){
           game.state.start("HowToPlay");     
-     }
+     },    
+    showLeaderBoard: function(){
+        game.state.start("LeaderBoard");
+    }
+    
+}
+
+
+var lobbyState = function(game){};
+lobbyState.prototype = {
+    
+    create: function(){
+        
+    var provider;
+        provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope("https://www.googleapis.com/auth/plus.login");
+        firebase.auth().signInWithPopup(provider).then(this.on_login.bind(this)).catch(this.handle_error.bind(this));
+    },
+    
+    on_login: function (result) {
+        //var email = firebase.auth().currentUser.email
+        //firebase.database().ref("users/" + result.user.uid).set("data");
+        game.state.start("TitleScreen");
+    },
+
+    handle_error: function (error) {
+        console.log(error);
+        game.state.start("TitleScreen");
+    }
 }
 
 var playGame = function(game){};
@@ -145,8 +211,6 @@ playGame.prototype = {
 			this.bgMusic = game.add.audio("bgmusic");
 			this.bgMusic.loopFull(1);
             score = 0;
-			savedData = localStorage.getItem(localStorageName)==null?
-			{score:0}:JSON.parse(localStorage.getItem(localStorageName));
 			var tintColor = bgColors[game.rnd.between(0,bgColors.length-1)];
 			document.body.style.background = "#"+tintColor.toString(16);
 			var tunnelBG = game.add.tileSprite(0,0,game.width,game.height,"tunnelbg");
@@ -358,17 +422,39 @@ var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
 
     create: function(){
-		var bestScore = Math.max(score, savedData.score);
+		//bestScore = Math.max(score, savedData.score);
         var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
         titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
 		document.body.style.background = "#"+titleBG.tint.toString(16);
         game.add.bitmapText(game.width / 2, 50 , "font", "Your score", 48).anchor.x = 0.5;
         game.add.bitmapText(game.width / 2, 150 , "font", score.toString(), 72).anchor.x = 0.5;
 		game.add.bitmapText(game.width / 2, 350 , "font", "Best score", 48).anchor.x = 0.5;
-		game.add.bitmapText(game.width / 2, 450 , "font", bestScore.toString(), 72).anchor.x = 0.5;
-		localStorage.setItem(localStorageName,JSON.stringify({
-			score: bestScore
-		}));
+		//game.add.bitmapText(game.width / 2, 450 , "font", bestScore.toString(), 72).anchor.x = 0.5;
+        
+        var authData = firebase.auth().currentUser;
+        name = firebase.auth().currentUser.displayName;
+        this.checkForFirstTime(name);
+        firebase.database().ref('fruits/').on('value', function(snapshot) {
+        snapshot.forEach(function(childSnapshot) {
+            var item = childSnapshot.val();
+            item.key = childSnapshot.key;
+            returnArr.push(item);
+            });
+            for (var i = 0; i < returnArr.length - 1; i++) {
+                if(returnArr[i].key == name){
+                    //console.log(returnArr[i].count);
+                    bestScore = Math.max(score, returnArr[i].count);
+                    game.add.bitmapText(game.width / 2, 450 , "font", bestScore, 72).anchor.x = 0.5;
+                    firebase.database().ref('fruits/' + name)
+                    .set({ count: bestScore});
+                    
+                }
+            }
+            console.log(score);
+    
+         });
+        
+        
         var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.startGame);
         playButton.anchor.set(0.5);
         var tween = game.add.tween(playButton).to({
@@ -376,10 +462,51 @@ gameOverScreen.prototype = {
 			height:220
         }, 1500, "Linear", true, 0, -1);
         tween.yoyo(true);
+
     },
+    
+    
+    checkForFirstTime: function (name) {
+    firebase.database().ref('fruits/').child(name).on('value', function(snapshot) {
+        console.log(name);
+        var exists = (snapshot.val() !== null);
+        //this.userFirstTimeCallback(name, exists),this;
+        console.log(exists);
+        if (exists) {
+            //alert('user ' + name + ' exists!');
+            firebase.database().ref('fruits/').on('value', function(snapshot) {
+                snapshot.forEach(function(childSnapshot) {
+                    var item = childSnapshot.val();
+                    item.key = childSnapshot.key;
+                    returnArr.push(item);
+                });
+                
+                for (var i = 0; i < returnArr.length - 1; i++) {
+                    if(returnArr[i].key == name){
+                        //console.log(returnArr[i].count);
+                        bestScore = Math.max(score, returnArr[i].count);
+                        game.add.bitmapText(game.width / 2, 450 , "font", bestScore, 72).anchor.x = 0.5;
+                        firebase.database().ref('fruits/' + name).set({ count: bestScore});
+                    }
+                }
+                console.log(score);
+            });
+        } else {
+            //alert('user ' + name + ' does not exist!');
+            // Do something here you want to do for first time users (Store data in database?)
+            var data = {
+                count: 0
+            };
+            firebase.database().ref('fruits/' + name).set(data);
+            //firebase.database().ref('fruits').push(data);
+            }   
+        });
+    },
+    
     startGame: function(){
 		game.state.start("PlayGame");
     }
+
 }
 
 var howToPlay = function(game){};
@@ -413,11 +540,64 @@ howToPlay.prototype = {
 		}, 1500, "Linear", true, 0, -1);
 		tween.yoyo(true);
 	},
+
 	startGame: function(){
 		game.state.start("PlayGame");
 	}
 }
 
+var leaderBoard = function(game){};
+leaderBoard.prototype = {
+	create: function(){
+        var titleBG = game.add.tileSprite(0,0,game.width,game.height,"backsplash");
+        titleBG.tint = bgColors[game.rnd.between(0, bgColors.length -1)];
+         //the next line will change background color according to-
+         //defined hex value bgColor[game.rnd.between(0, bgColor.length - 1 )]
+        game.stage.backgroundColor = bgColors[game.rnd.between(0, bgColors.length - 1)];
+        
+		 // adding or making the whole background as game color
+        document.body.style.background = "#"+titleBG.tint.toString(16);
+        
+        var playButton = game.add.button(game.width / 2, game.height - 150, "playbutton", this.startGame);
+         playButton.anchor.set(0.5);
+		 var tween = game.add.tween(playButton).to({
+               width: 220,
+               height:220
+          }, 1500, "Linear", true, 0, -1); 
+          tween.yoyo(true);
+        
+        for(var i = 1; i < 6; i++){
+            game.add.bitmapText(game.width / 2 -200, 100 + (i*90) , "font", i + ". ", 20);
+        }
+
+        var playersRef = firebase.database().ref("fruits/").limitToLast(5);
+        var a = [] , b = [];
+        
+        //console.log("a " + a.length);
+        playersRef.orderByChild("count").on("child_added", function(data) {
+
+            a [k] = [data.key];
+            b [k] = [data.val().count];
+            console.log(a[k]);
+            k = k+1;
+            console.log(a.length);
+            if(a.length == 5){
+
+                var m = 0
+                for(var i = 4; i >= 0;i--){
+                    game.add.bitmapText(game.width / 2 -180, 100 + ((m+1)*90) ,  "font", a[i],20);
+                    game.add.bitmapText(game.width / 2 + 70, 100 + ((m+1)*90) ,  "font", b[i],20);
+                    
+                    m++;
+                }
+            }
+            
+           });
+    },
+     startGame: function(){
+          game.state.start("HowToPlay");     
+     }
+}
 
 Barrier = function (game, speed, tintColor) {
      var positions = [(game.width - tunnelWidth) / 2, (game.width + tunnelWidth) / 2];
@@ -432,6 +612,9 @@ Barrier = function (game, speed, tintColor) {
      this.body.velocity.y = speed;
      this.placeBarrier = true;
 };
+
+
+
 
 Barrier.prototype = Object.create(Phaser.Sprite.prototype);
 Barrier.prototype.constructor = Barrier;
