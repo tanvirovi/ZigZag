@@ -22,10 +22,13 @@ var barrierIncreaseSpeed = 1.1;
 
 var scoreHeight = 100;
 
+var multiPlayer_1 = false;
+var multiPlayer_2 = false;
+
 var scoreSegments = [100, 50, 25, 10, 5, 2, 1];
 
 var name;
-var bestScore;
+var bestScore, battlekey;
 var returnArr = [];
 
 var k = 0;
@@ -79,11 +82,13 @@ window.onload = function() {
     
     game.state.add("LeaderBoard", leaderBoard);
     
-    //game.state.add("BattleMode", battleMode);
+    game.state.add("BattleMode", battleMode);
+    
+    game.state.add("MultiPlayer_1_GameOver", multiPlayer_1_GameOver);
+    
+    game.state.add("MultiPlayer_2_GameOver", multiPlayer_2_GameOver);
     
     game.state.start("Boot"); //starting the first state
-    
-    
 }
 
 var boot = function(game){};
@@ -117,6 +122,7 @@ preload.prototype = {
 		  game.load.image("ship", "assets/sprites/ship.png");
           game.load.image("barrier", "assets/sprites/barrier.png");
           game.load.image("smoke", "assets/sprites/smoke.png");
+          game.load.image("battle", "assets/sprites/battle.png");
           game.load.image("separator", "assets/sprites/separator.png");
           game.load.bitmapFont("font", "assets/fonts/font.png", "assets/fonts/font.fnt");
 		  game.load.audio("bgmusic", ["assets/sounds/bgmusic.mp3", "assets/sounds/bgmusic.ogg"]);
@@ -163,9 +169,17 @@ titleScreen.prototype = {
           }, 1500, "Linear", true, 0, -1); 
           tween.yoyo(true);
                  
-        var leader = game.add.button(game.width / 2, 480, "leaderboard", this.showLeaderBoard);
+        var leader = game.add.button(game.width / 2, 400, "leaderboard", this.showLeaderBoard);
 		leader.anchor.set(0.5);
         var tween = game.add.tween(leader).to({
+               width: 54,
+               height:54
+          }, 1500, "Linear", true, 0, -1); 
+          tween.yoyo(true);
+         
+        var battle = game.add.button(game.width / 2, 550, "battle", this.battleMode);
+		battle.anchor.set(0.5);
+        var tween = game.add.tween(battle).to({
                width: 54,
                height:54
           }, 1500, "Linear", true, 0, -1); 
@@ -174,6 +188,9 @@ titleScreen.prototype = {
      startGame: function(){
           game.state.start("HowToPlay");     
      },    
+    battleMode: function(){
+        game.state.start("BattleMode");
+    },
     showLeaderBoard: function(){
         game.state.start("LeaderBoard");
     }
@@ -207,6 +224,11 @@ lobbyState.prototype = {
 var playGame = function(game){};
 playGame.prototype = {
 		create: function(){
+            console.log(battlekey);
+            console.log("palyer_1 is active " + multiPlayer_1);
+            console.log("palyer_2 is active " + multiPlayer_2);
+            console.log(multiPlayer_1 || multiPlayer_2);
+            if (multiPlayer_1 || multiPlayer_2){
 			this.saveBarrierSpeed = barrierSpeed;
 			this.bgMusic = game.add.audio("bgmusic");
 			this.bgMusic.loopFull(1);
@@ -237,6 +259,7 @@ playGame.prototype = {
             }
             
             this.scoreText = game.add.bitmapText(20, game.height - 90 , "font", "0", 48);
+            this.multiscoreText = game.add.bitmapText(580, game.height - 90 , "font", "0", 48);
 			// which is game game.width = 640 tunnelWidth = 256 shipPositions = [224,160]
 			this.shipPositions = [(game.width - tunnelWidth) / 2 + 32, (game.width + tunnelWidth) / 2 - 32];
 			// this will load the ship on the left side
@@ -294,6 +317,8 @@ playGame.prototype = {
 			this.spacebar.onDown.add(this.moveShip, this);
 			this.shift = game.input.keyboard.addKey(Phaser.Keyboard.SHIFT);
 			this.shift.onDown.add(this.restartShip, this);
+            
+            }
 		},
 		moveShip: function(e){     
 			var isKeyboard = e instanceof Phaser.Key;
@@ -367,7 +392,13 @@ playGame.prototype = {
                     this.ship.destroy();
                         game.time.events.add(Phaser.Timer.SECOND * 2, function(){
 							//barrierSpeed = this.saveBarrierSpeed;
-                            game.state.start("GameOverScreen");
+                            if (multiPlayer_1){
+                            game.state.start("MultiPlayer_1_GameOver");
+                            }
+                            
+                            if (multiPlayer_2){
+                            game.state.start("MultiPlayer_2_GameOver");
+                            }
                         });
                     }, this);
                 }, this)
@@ -434,6 +465,15 @@ gameOverScreen.prototype = {
         var authData = firebase.auth().currentUser;
         name = firebase.auth().currentUser.displayName;
         this.checkForFirstTime(name);
+        
+        var ref = firebase.database().ref("battles/");
+        ref.on("value", function(childSnapshot) {
+            console.log("from gameover" + childSnapshot.chosenbtl);
+            
+        }, function (error) {
+            console.log("Error: " + error.code);
+        });
+        
         firebase.database().ref('fruits/').on('value', function(snapshot) {
         snapshot.forEach(function(childSnapshot) {
             var item = childSnapshot.val();
@@ -450,7 +490,7 @@ gameOverScreen.prototype = {
                     
                 }
             }
-            console.log(score);
+            //console.log(score);
     
          });
         
@@ -489,7 +529,7 @@ gameOverScreen.prototype = {
                         firebase.database().ref('fruits/' + name).set({ count: bestScore});
                     }
                 }
-                console.log(score);
+                //console.log(score);
             });
         } else {
             //alert('user ' + name + ' does not exist!');
@@ -507,6 +547,63 @@ gameOverScreen.prototype = {
 		game.state.start("PlayGame");
     }
 
+}
+
+var multiPlayer_1_GameOver = function(game){};
+multiPlayer_1_GameOver.prototype = {
+    create: function(){
+        var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
+        titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
+		document.body.style.background = "#"+titleBG.tint.toString(16);
+        console.log(battlekey);
+        
+        firebase.database().ref("battles").child(battlekey).child("player1").set(score);
+        var player_1_score, palyer_2_score,battles;
+        firebase.database().ref("battles").child(battlekey).on("value",function(snapshot){
+            battles = snapshot.val();
+            player_1_score = score;
+            palyer_2_score = battles.player2;
+            console.log("player_1 " + player_1_score);
+            console.log("player_2 " + palyer_2_score);
+            if (palyer_2_score > 1){
+                if(player_1_score > palyer_2_score){
+                    console.log("you won !!");
+                }else{
+                    console.log("you lose !!");
+                }
+            }else{
+                console.log("please wait other player to finish");
+            }
+        });
+    }
+}
+
+var multiPlayer_2_GameOver = function(game){};
+multiPlayer_2_GameOver.prototype = {
+    create: function(){
+        var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
+        titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
+		document.body.style.background = "#"+titleBG.tint.toString(16);
+        console.log(battlekey);
+        firebase.database().ref("battles").child(battlekey).child("player2").set(score);
+        var player_1_score, palyer_2_score,battles;
+        firebase.database().ref("battles").child(battlekey).on("value",function(snapshot){
+            battles = snapshot.val();
+            player_2_score = score;
+            palyer_1_score = battles.player1;
+            console.log("player_1 " + player_1_score);
+            console.log("player_2 " + palyer_2_score);
+            if (palyer_1_score > 1){
+                if(player_2_score > palyer_1_score){
+                    console.log("you won !!");
+                }else{
+                    console.log("you lose !!");
+                }
+            }else{
+                console.log("please wait other player to finish");
+            }
+        });
+    }
 }
 
 var howToPlay = function(game){};
@@ -599,6 +696,67 @@ leaderBoard.prototype = {
      }
 }
 
+var battleMode = function(game){};
+battleMode.prototype = {
+    create: function(){
+        firebase.database().ref("battles").once("value", this.find_battle.bind(this));
+    },
+    
+    find_battle: function(snapshot){
+        var battles,battle,chosen_battle,new_battle;
+        battles = snapshot.val();
+        
+        for(battle in battles){
+            if(battles.hasOwnProperty(battle) && !battles[battle].full){
+                chosen_battle = battle;
+                console.log("this is the r = " +  chosen_battle);
+                //battlekey = chosen_battle;
+                firebase.database().ref("battles").child(chosen_battle).child("full").set(true, this.join_battle.bind(this,chosen_battle));
+                break;
+            }
+        }
+        if(!chosen_battle){
+            this.new_battle = firebase.database().ref("battles/").push({player1:"", player2:"", full: false, gamestatus:false, chosenbtl:""});
+            this.new_battle.on("value", this.host_battle.bind(this));
+            console.log(snapshot.val());
+            
+        }
+    },
+    
+    host_battle: function(snapshot){
+        var battle_data;
+        var battles,battle,chosen_battle;
+        
+        //battles = snapshot.val();
+        firebase.database().ref("battles").once("value",function(snapshot){
+            battles = snapshot.val();
+            for(battle in battles){
+                if(battles.hasOwnProperty(battle) && !battles[battle].full){
+                    battlekey = battle;
+                    console.log("from 682 " + battlekey);
+                    break;
+                }
+            }
+        });
+        battle_data = snapshot.val();
+        if (battle_data.full) {
+            this.new_battle.off();
+            multiPlayer_1 = true;
+
+            this.game.state.start("PlayGame", battlekey);
+            //this.init({battle_id: snapshot.val(),local_palyer: "player1", remote_player:"player2"});
+        }
+    },
+    join_battle: function(battle_id){
+        console.log(battle_id);
+        firebase.database().ref("battles").child(battle_id).child("chosenbtl").set(battle_id);
+        multiPlayer_2 = true;
+        battlekey = battle_id;
+        this.game.state.start("PlayGame", multiPlayer_2);
+        //this.init({battle_id: battle_id.key,local_palyer: "player2", remote_player:"player1"});
+    }
+}
+
 Barrier = function (game, speed, tintColor) {
      var positions = [(game.width - tunnelWidth) / 2, (game.width + tunnelWidth) / 2];
      var position = game.rnd.between(0, 1);
@@ -612,9 +770,6 @@ Barrier = function (game, speed, tintColor) {
      this.body.velocity.y = speed;
      this.placeBarrier = true;
 };
-
-
-
 
 Barrier.prototype = Object.create(Phaser.Sprite.prototype);
 Barrier.prototype.constructor = Barrier;
