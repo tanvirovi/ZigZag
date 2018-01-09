@@ -181,8 +181,8 @@ titleScreen.prototype = {
         var battle = game.add.button(game.width / 2, 550, "battle", this.battleMode);
 		battle.anchor.set(0.5);
         var tween = game.add.tween(battle).to({
-               width: 54,
-               height:54
+               width: 70,
+               height:70
           }, 1500, "Linear", true, 0, -1); 
           tween.yoyo(true);
      },
@@ -230,7 +230,7 @@ playGame.prototype = {
             console.log("palyer_1 is active " + multiPlayer_1);
             console.log("palyer_2 is active " + multiPlayer_2);
             console.log(multiPlayer_1 || multiPlayer_2);
-            if (multiPlayer_1 || multiPlayer_2 || singlePlayer){
+            if ((multiPlayer_1 || multiPlayer_2) || singlePlayer){
 			this.saveBarrierSpeed = barrierSpeed;
 			this.bgMusic = game.add.audio("bgmusic");
 			this.bgMusic.loopFull(1);
@@ -396,9 +396,11 @@ playGame.prototype = {
 							//barrierSpeed = this.saveBarrierSpeed;
                             if (multiPlayer_1){
                                 game.state.start("MultiPlayer_1_GameOver");
-                            }else if (multiPlayer_2){
+                            } 
+                                if (multiPlayer_2){
                                 game.state.start("MultiPlayer_2_GameOver");
-                            }else{
+                            }
+                            if(singlePlayer){
                                 game.state.start("GameOverScreen");
                             }
                         });
@@ -568,7 +570,7 @@ multiPlayer_1_GameOver.prototype = {
             palyer_2_score = battles.player2;
             console.log("player_1 " + player_1_score);
             console.log("player_2 " + palyer_2_score);
-            if (palyer_2_score > 1){
+            if (palyer_2_score > -1){
                 if(player_1_score > palyer_2_score){
                     game.world.removeAll();
                     
@@ -576,7 +578,15 @@ multiPlayer_1_GameOver.prototype = {
                     titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
                     document.body.style.background = "#"+titleBG.tint.toString(16);
                     
-                    game.add.bitmapText(game.width / 2, 50 , "font", "Your Win", 48).anchor.x = 0.5;
+                    var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.strg);
+                    playButton.anchor.set(0.5);
+                    var tween = game.add.tween(playButton).to({
+                        width: 220,
+                        height:220
+                    }, 1500, "Linear", true, 0, -1);
+                    tween.yoyo(true);
+                    
+                    game.add.bitmapText(game.width / 2, 50 , "font", "You Win", 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 150 , "font", "Your score " + player_1_score, 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 200 , "font", "Your Opponent Score " + palyer_2_score, 48).anchor.x = 0.5;
                     
@@ -586,6 +596,14 @@ multiPlayer_1_GameOver.prototype = {
                     var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
                     titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
                     document.body.style.background = "#"+titleBG.tint.toString(16);
+                    
+                    var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.strg);
+                    playButton.anchor.set(0.5);
+                    var tween = game.add.tween(playButton).to({
+                        width: 220,
+                        height:220
+                    }, 1500, "Linear", true, 0, -1);
+                    tween.yoyo(true);
                     game.add.bitmapText(game.width / 2, 50 , "font", "Draw", 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 150 , "font", "Your score " + player_1_score, 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 200 , "font", "Your Opponent Score " + palyer_2_score, 48).anchor.x = 0.5;
@@ -595,7 +613,16 @@ multiPlayer_1_GameOver.prototype = {
                     var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
                     titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
                     document.body.style.background = "#"+titleBG.tint.toString(16);
-                    game.add.bitmapText(game.width / 2, 50 , "font", "Your lose", 48).anchor.x = 0.5;
+                    
+                    var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.strg);
+                    playButton.anchor.set(0.5);
+                    var tween = game.add.tween(playButton).to({
+                        width: 220,
+                        height:220
+                    }, 1500, "Linear", true, 0, -1);
+                    tween.yoyo(true);
+                    
+                    game.add.bitmapText(game.width / 2, 50 , "font", "You lose", 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 150 , "font", "Your score " + player_1_score, 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 200 , "font", "Your Opponent Score " + palyer_2_score, 48).anchor.x = 0.5;
                 }
@@ -603,11 +630,6 @@ multiPlayer_1_GameOver.prototype = {
                 game.add.bitmapText(game.width / 2, 50 , "font", "Please wait for other player", 35).anchor.x = 0.5;
             }
         });
-    },
-    backgrnd: function(){
-        var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
-        titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
-		document.body.style.background = "#"+titleBG.tint.toString(16);
     }
 }
 
@@ -632,15 +654,22 @@ multiPlayer_2_GameOver.prototype = {
             var j = btl.chosenbtl;
             console.log("player_1 " + player);
             console.log("player_2 " + palyer_2);
-            if (player > 1){
+            if (player > -1){
                 if(palyer_2 > player){
                     game.world.removeAll();
                     
                     var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
                     titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
                     document.body.style.background = "#"+titleBG.tint.toString(16);
+                    var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.strg);
+                    playButton.anchor.set(0.5);
+                    var tween = game.add.tween(playButton).to({
+                        width: 220,
+                        height:220
+                    }, 1500, "Linear", true, 0, -1);
+                    tween.yoyo(true);
                     
-                    game.add.bitmapText(game.width / 2, 50 , "font", "Your Win", 48).anchor.x = 0.5;
+                    game.add.bitmapText(game.width / 2, 50 , "font", "You Win", 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 150 , "font", "Your score " + palyer_2, 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 200 , "font", "Your Opponent Score " + player, 48).anchor.x = 0.5;
                     
@@ -650,6 +679,13 @@ multiPlayer_2_GameOver.prototype = {
                     var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
                     titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
                     document.body.style.background = "#"+titleBG.tint.toString(16);
+                    var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.strg);
+                    playButton.anchor.set(0.5);
+                    var tween = game.add.tween(playButton).to({
+                        width: 220,
+                        height:220
+                    }, 1500, "Linear", true, 0, -1);
+                    tween.yoyo(true);
                     game.add.bitmapText(game.width / 2, 50 , "font", "Draw", 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 150 , "font", "Your score " + palyer_2, 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 200 , "font", "Your Opponent Score " + player, 48).anchor.x = 0.5;
@@ -660,7 +696,14 @@ multiPlayer_2_GameOver.prototype = {
                     var titleBG = game.add.tileSprite(0, 0, game.width, game.height,"backsplash");
                     titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
                     document.body.style.background = "#"+titleBG.tint.toString(16);
-                    game.add.bitmapText(game.width / 2, 50 , "font", "Your lose", 48).anchor.x = 0.5;
+                    var playButton = game.add.button(game.width / 2, game.height - 150,"playbutton", this.strg);
+                    playButton.anchor.set(0.5);
+                    var tween = game.add.tween(playButton).to({
+                        width: 220,
+                        height:220
+                    }, 1500, "Linear", true, 0, -1);
+                    tween.yoyo(true);
+                    game.add.bitmapText(game.width / 2, 50 , "font", "You lose", 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 150 , "font", "Your score " + palyer_2, 48).anchor.x = 0.5;
                     game.add.bitmapText(game.width / 2, 200 , "font", "Your Opponent Score " + player, 48).anchor.x = 0.5;
                 }
@@ -734,14 +777,14 @@ leaderBoard.prototype = {
 
         var playersRef = firebase.database().ref("fruits/").limitToLast(5);
         var a = [] , b = [];
-        
+        var p = 0;
         //console.log("a " + a.length);
         playersRef.orderByChild("count").on("child_added", function(data) {
 
-            a [k] = [data.key];
-            b [k] = [data.val().count];
+            a [p] = [data.key];
+            b [p] = [data.val().count];
             console.log(a[k]);
-            k = k+1;
+            p = p+1;
             console.log(a.length);
             if(a.length == 5){
 
@@ -757,7 +800,7 @@ leaderBoard.prototype = {
            });
     },
      startGame: function(){
-          game.state.start("HowToPlay");     
+          game.state.start("TitleScreen");     
      }
 }
 
@@ -781,7 +824,7 @@ battleMode.prototype = {
             }
         }
         if(!chosen_battle){
-            this.new_battle = firebase.database().ref("battles/").push({player1: 0 , player2:0, full: false, gamestatus:false, chosenbtl:""});
+            this.new_battle = firebase.database().ref("battles/").push({player1: -1 , player2:-1, full: false, gamestatus:false, chosenbtl:""});
             this.new_battle.on("value", this.host_battle.bind(this));
             console.log(snapshot.val());
             
@@ -817,6 +860,7 @@ battleMode.prototype = {
         firebase.database().ref("battles").child(battle_id).child("chosenbtl").set(battle_id);
         multiPlayer_2 = true;
         battlekey = battle_id;
+        
         this.game.state.start("PlayGame", multiPlayer_2);
         //this.init({battle_id: battle_id.key,local_palyer: "player2", remote_player:"player1"});
     }
@@ -834,6 +878,10 @@ Barrier = function (game, speed, tintColor) {
      this.body.immovable = true;
      this.body.velocity.y = speed;
      this.placeBarrier = true;
+};
+
+strg = function(){
+    game.state.start("TitleScreen");
 };
 
 Barrier.prototype = Object.create(Phaser.Sprite.prototype);
